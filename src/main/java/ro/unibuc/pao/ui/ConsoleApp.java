@@ -1,5 +1,6 @@
 package ro.unibuc.pao.ui;
 
+import ro.unibuc.pao.db.DatabaseManager;
 import ro.unibuc.pao.model.CardCredential;
 import ro.unibuc.pao.model.Category;
 import ro.unibuc.pao.model.Credential;
@@ -23,6 +24,7 @@ public class ConsoleApp {
     private final AuditService auditService = AuditService.getInstance();
 
     public void run() {
+        DatabaseManager.getInstance().initialize();
         boolean running = true;
         while (running) {
             printMenu();

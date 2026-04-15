@@ -2,35 +2,34 @@ package ro.unibuc.pao.service;
 
 import ro.unibuc.pao.model.UserAccount;
 import ro.unibuc.pao.model.Vault;
+import ro.unibuc.pao.repository.UserAccountRepository;
+import ro.unibuc.pao.repository.VaultRepository;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AuthService {
-    private final Map<String, UserAccount> usersByUsername = new HashMap<>();
-    private final Map<Integer, Vault> vaultsByUserId = new HashMap<>();
-    private int nextUserId = 1;
-    private int nextVaultId = 1;
+    private final UserAccountRepository userAccountRepository = new UserAccountRepository();
+    private final VaultRepository vaultRepository = new VaultRepository();
     private UserAccount currentUser;
+    private Vault currentVault;
     private String currentMasterPassword;
 
     public boolean register(String username, String masterPassword) {
-        if (usersByUsername.containsKey(username)) {
+        if (userAccountRepository.findByUsername(username) != null) {
             return false;
         }
 
-        UserAccount user = new UserAccount(nextUserId++, username,
+        UserAccount user = new UserAccount(0, username,
                 SecurityUtils.hash(masterPassword), LocalDateTime.now());
-        Vault vault = new Vault(nextVaultId++, username + "_vault", user);
+        userAccountRepository.insert(user);
 
-        usersByUsername.put(username, user);
-        vaultsByUserId.put(user.getId(), vault);
+        Vault vault = new Vault(0, username + "_vault", user);
+        vaultRepository.insert(vault);
         return true;
     }
 
     public boolean login(String username, String masterPassword) {
-        UserAccount user = usersByUsername.get(username);
+        UserAccount user = userAccountRepository.findByUsername(username);
         if (user == null) {
             return false;
         }
@@ -40,12 +39,14 @@ public class AuthService {
         }
 
         currentUser = user;
+        currentVault = vaultRepository.findByOwnerId(user.getId());
         currentMasterPassword = masterPassword;
         return true;
     }
 
     public void logout() {
         currentUser = null;
+        currentVault = null;
         currentMasterPassword = null;
     }
 
@@ -58,21 +59,10 @@ public class AuthService {
     }
 
     public Vault getCurrentVault() {
-        if (currentUser == null) {
-            return null;
-        }
-        return vaultsByUserId.get(currentUser.getId());
+        return currentVault;
     }
 
     public String getCurrentMasterPassword() {
         return currentMasterPassword;
-    }
-
-    public Map<String, UserAccount> getUsersByUsername() {
-        return usersByUsername;
-    }
-
-    public Map<Integer, Vault> getVaultsByUserId() {
-        return vaultsByUserId;
     }
 }

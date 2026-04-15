@@ -7,6 +7,7 @@ import ro.unibuc.pao.model.NoteCredential;
 import ro.unibuc.pao.model.SecurityReport;
 import ro.unibuc.pao.model.Vault;
 import ro.unibuc.pao.model.WebsiteCredential;
+import ro.unibuc.pao.repository.CredentialRepository;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -15,52 +16,47 @@ import java.util.List;
 import java.util.Map;
 
 public class CredentialService {
-    private int nextId = 1;
+    private final CredentialRepository credentialRepository = new CredentialRepository();
 
     public WebsiteCredential addWebsiteCredential(Vault vault, String title, String username, String password,
                                                   Category category, String websiteUrl, String email,
                                                   String masterPassword) {
-        WebsiteCredential credential = new WebsiteCredential(nextId++, title, username,
+        WebsiteCredential credential = new WebsiteCredential(0, title, username,
                 SecurityUtils.encrypt(password, masterPassword), category, websiteUrl, email);
-        vault.getCredentials().add(credential);
+        credentialRepository.insert(vault.getId(), credential);
         return credential;
     }
 
     public CardCredential addCardCredential(Vault vault, String title, String username, String pin,
                                             Category category, String cardHolder, String cardNumber,
                                             String expirationDate, String masterPassword) {
-        CardCredential credential = new CardCredential(nextId++, title, username,
+        CardCredential credential = new CardCredential(0, title, username,
                 SecurityUtils.encrypt(pin, masterPassword), category, cardHolder,
                 SecurityUtils.encrypt(cardNumber, masterPassword), expirationDate);
-        vault.getCredentials().add(credential);
+        credentialRepository.insert(vault.getId(), credential);
         return credential;
     }
 
     public NoteCredential addNoteCredential(Vault vault, String title, String username, String secret,
                                             Category category, String content, String masterPassword) {
-        NoteCredential credential = new NoteCredential(nextId++, title, username,
+        NoteCredential credential = new NoteCredential(0, title, username,
                 SecurityUtils.encrypt(secret, masterPassword), category,
                 SecurityUtils.encrypt(content, masterPassword));
-        vault.getCredentials().add(credential);
+        credentialRepository.insert(vault.getId(), credential);
         return credential;
     }
 
     public List<Credential> getAllCredentials(Vault vault) {
-        return new ArrayList<>(vault.getCredentials());
+        return new ArrayList<>(credentialRepository.findByVaultId(vault.getId()));
     }
 
     public Credential findById(Vault vault, int id) {
-        for (Credential credential : vault.getCredentials()) {
-            if (credential.getId() == id) {
-                return credential;
-            }
-        }
-        return null;
+        return credentialRepository.findById(vault.getId(), id);
     }
 
     public List<Credential> searchByTitleOrUsername(Vault vault, String text) {
         List<Credential> result = new ArrayList<>();
-        for (Credential credential : vault.getCredentials()) {
+        for (Credential credential : getAllCredentials(vault)) {
             if (credential.getTitle().toLowerCase().contains(text.toLowerCase())
                     || credential.getUsername().toLowerCase().contains(text.toLowerCase())) {
                 result.add(credential);
@@ -71,7 +67,7 @@ public class CredentialService {
 
     public List<Credential> filterByCategory(Vault vault, String categoryName) {
         List<Credential> result = new ArrayList<>();
-        for (Credential credential : vault.getCredentials()) {
+        for (Credential credential : getAllCredentials(vault)) {
             if (credential.getCategory() != null
                     && credential.getCategory().getName().equalsIgnoreCase(categoryName)) {
                 result.add(credential);
@@ -91,6 +87,7 @@ public class CredentialService {
         credential.setUsername(newUsername);
         credential.setSecret(SecurityUtils.encrypt(newSecret, masterPassword));
         credential.touch();
+        credentialRepository.update(credential);
         return true;
     }
 
@@ -99,11 +96,12 @@ public class CredentialService {
         if (credential == null) {
             return false;
         }
-        return vault.getCredentials().remove(credential);
+        credentialRepository.delete(id);
+        return true;
     }
 
     public List<Credential> getSortedCredentials(Vault vault) {
-        List<Credential> result = new ArrayList<>(vault.getCredentials());
+        List<Credential> result = new ArrayList<>(getAllCredentials(vault));
         result.sort(Comparator.comparing(Credential::getTitle, String.CASE_INSENSITIVE_ORDER));
         return result;
     }
@@ -130,8 +128,9 @@ public class CredentialService {
         int reusedPasswords = 0;
         Map<String, Integer> titleFrequency = new HashMap<>();
         Map<String, Integer> secretFrequency = new HashMap<>();
+        List<Credential> credentials = getAllCredentials(vault);
 
-        for (Credential credential : vault.getCredentials()) {
+        for (Credential credential : credentials) {
             String decryptedSecret = SecurityUtils.decrypt(credential.getSecret(), masterPassword);
             titleFrequency.merge(credential.getTitle().toLowerCase(), 1, Integer::sum);
             secretFrequency.merge(decryptedSecret, 1, Integer::sum);
@@ -152,7 +151,7 @@ public class CredentialService {
             }
         }
 
-        return new SecurityReport(vault.getCredentials().size(), weakPasswords, reusedPasswords, duplicateTitles);
+        return new SecurityReport(credentials.size(), weakPasswords, reusedPasswords, duplicateTitles);
     }
 
     public String generatePassword() {

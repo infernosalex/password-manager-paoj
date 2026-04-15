@@ -1,23 +1,24 @@
 package ro.unibuc.pao.service;
 
 import ro.unibuc.pao.model.Category;
+import ro.unibuc.pao.repository.CategoryRepository;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 
 public class CategoryService {
+    private final CategoryRepository categoryRepository = new CategoryRepository();
     private final TreeSet<Category> sortedCategories = new TreeSet<>();
-    private final Map<Integer, Category> categoriesById = new HashMap<>();
-    private int nextId = 1;
 
     public CategoryService() {
-        addCategory("Personal", "Conturi personale");
-        addCategory("School", "Platforme educationale");
-        addCategory("Finance", "Carduri si servicii bancare");
-        addCategory("Work", "Conturi de lucru");
+        loadCategories();
+        if (sortedCategories.isEmpty()) {
+            addCategory("Personal", "Conturi personale");
+            addCategory("School", "Platforme educationale");
+            addCategory("Finance", "Carduri si servicii bancare");
+            addCategory("Work", "Conturi de lucru");
+        }
     }
 
     public Category addCategory(String name, String description) {
@@ -26,14 +27,19 @@ public class CategoryService {
             return existingCategory;
         }
 
-        Category category = new Category(nextId++, name, description);
+        Category category = new Category(0, name, description);
+        categoryRepository.insert(category);
         sortedCategories.add(category);
-        categoriesById.put(category.getId(), category);
         return category;
     }
 
     public Category findById(int id) {
-        return categoriesById.get(id);
+        for (Category category : sortedCategories) {
+            if (category.getId() == id) {
+                return category;
+            }
+        }
+        return null;
     }
 
     public Category findByName(String name) {
@@ -47,5 +53,9 @@ public class CategoryService {
 
     public List<Category> getAllCategories() {
         return new ArrayList<>(sortedCategories);
+    }
+
+    private void loadCategories() {
+        sortedCategories.addAll(categoryRepository.findAll());
     }
 }
