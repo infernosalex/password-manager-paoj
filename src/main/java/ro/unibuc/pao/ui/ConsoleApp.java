@@ -17,14 +17,22 @@ import java.util.List;
 import java.util.Scanner;
 
 public class ConsoleApp {
-    private final Scanner scanner = new Scanner(System.in);
-    private final AuthService authService = new AuthService();
-    private final CategoryService categoryService = new CategoryService();
-    private final CredentialService credentialService = new CredentialService();
-    private final AuditService auditService = AuditService.getInstance();
+    private final Scanner scanner;
+    private final AuthService authService;
+    private final CategoryService categoryService;
+    private final CredentialService credentialService;
+    private final AuditService auditService;
+
+    public ConsoleApp() {
+        DatabaseManager.getInstance().initialize();
+        this.scanner = new Scanner(System.in);
+        this.authService = new AuthService();
+        this.categoryService = new CategoryService();
+        this.credentialService = new CredentialService();
+        this.auditService = AuditService.getInstance();
+    }
 
     public void run() {
-        DatabaseManager.getInstance().initialize();
         boolean running = true;
         while (running) {
             printMenu();
@@ -263,6 +271,10 @@ public class ConsoleApp {
 
     private void showCategories() {
         auditService.logAction("showCategories");
+        printCategories();
+    }
+
+    private void printCategories() {
         for (Category category : categoryService.getAllCategories()) {
             System.out.println(category.getId() + ". " + category);
         }
@@ -311,7 +323,7 @@ public class ConsoleApp {
     }
 
     private Category readCategory() {
-        showCategories();
+        printCategories();
         System.out.print("Alege id categorie: ");
         int categoryId = Integer.parseInt(scanner.nextLine());
         Category category = categoryService.findById(categoryId);
