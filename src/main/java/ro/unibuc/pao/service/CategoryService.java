@@ -51,6 +51,27 @@ public class CategoryService {
         return null;
     }
 
+    public boolean updateCategory(int id, String name, String description) {
+        Category category = findById(id);
+        if (category == null) {
+            return false;
+        }
+        category.setName(name);
+        category.setDescription(description);
+        categoryRepository.update(category);
+        return true;
+    }
+
+    public boolean deleteCategory(int id) {
+        Category category = findById(id);
+        if (category == null) {
+            return false;
+        }
+        categoryRepository.delete(id);
+        sortedCategories.remove(category);
+        return true;
+    }
+
     public List<Category> getAllCategories() {
         return new ArrayList<>(sortedCategories);
     }

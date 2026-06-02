@@ -62,4 +62,22 @@ public class UserAccountRepository {
                 )
         );
     }
+
+    public void update(UserAccount userAccount) {
+        writeService.execute(
+                "UPDATE users SET username = ?, master_password_hash = ? WHERE id = ?",
+                statement -> {
+                    statement.setString(1, userAccount.getUsername());
+                    statement.setString(2, userAccount.getMasterPasswordHash());
+                    statement.setInt(3, userAccount.getId());
+                }
+        );
+    }
+
+    public void delete(int id) {
+        writeService.execute(
+                "DELETE FROM users WHERE id = ?",
+                statement -> statement.setInt(1, id)
+        );
+    }
 }

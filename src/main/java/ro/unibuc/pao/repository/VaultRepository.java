@@ -32,4 +32,21 @@ public class VaultRepository {
                 }
         );
     }
+
+    public void update(Vault vault) {
+        writeService.execute(
+                "UPDATE vaults SET name = ? WHERE id = ?",
+                statement -> {
+                    statement.setString(1, vault.getName());
+                    statement.setInt(2, vault.getId());
+                }
+        );
+    }
+
+    public void delete(int id) {
+        writeService.execute(
+                "DELETE FROM vaults WHERE id = ?",
+                statement -> statement.setInt(1, id)
+        );
+    }
 }

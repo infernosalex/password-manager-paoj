@@ -57,4 +57,22 @@ public class CategoryRepository {
                 )
         );
     }
+
+    public void update(Category category) {
+        writeService.execute(
+                "UPDATE categories SET name = ?, description = ? WHERE id = ?",
+                statement -> {
+                    statement.setString(1, category.getName());
+                    statement.setString(2, category.getDescription());
+                    statement.setInt(3, category.getId());
+                }
+        );
+    }
+
+    public void delete(int id) {
+        writeService.execute(
+                "DELETE FROM categories WHERE id = ?",
+                statement -> statement.setInt(1, id)
+        );
+    }
 }

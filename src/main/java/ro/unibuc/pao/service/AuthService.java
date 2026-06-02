@@ -44,6 +44,38 @@ public class AuthService {
         return true;
     }
 
+    public boolean updateAccount(String newUsername, String newMasterPassword) {
+        if (currentUser == null) {
+            return false;
+        }
+        currentUser.setUsername(newUsername);
+        currentUser.setMasterPasswordHash(SecurityUtils.hash(newMasterPassword));
+        userAccountRepository.update(currentUser);
+        currentMasterPassword = newMasterPassword;
+        return true;
+    }
+
+    public boolean renameVault(String newName) {
+        if (currentVault == null) {
+            return false;
+        }
+        currentVault.setName(newName);
+        vaultRepository.update(currentVault);
+        return true;
+    }
+
+    public boolean deleteAccount() {
+        if (currentUser == null) {
+            return false;
+        }
+        if (currentVault != null) {
+            vaultRepository.delete(currentVault.getId());
+        }
+        userAccountRepository.delete(currentUser.getId());
+        logout();
+        return true;
+    }
+
     public void logout() {
         currentUser = null;
         currentVault = null;

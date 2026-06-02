@@ -55,6 +55,11 @@ public class ConsoleApp {
                 case "15" -> generatePassword();
                 case "16" -> exportSummary();
                 case "17" -> logout();
+                case "18" -> updateCategory();
+                case "19" -> deleteCategory();
+                case "20" -> updateAccount();
+                case "21" -> renameVault();
+                case "22" -> deleteAccount();
                 case "0" -> running = false;
                 default -> System.out.println("Optiune invalida.");
             }
@@ -81,6 +86,11 @@ public class ConsoleApp {
         System.out.println("15. Generate password");
         System.out.println("16. Export summary");
         System.out.println("17. Logout");
+        System.out.println("18. Update category");
+        System.out.println("19. Delete category");
+        System.out.println("20. Update account");
+        System.out.println("21. Rename vault");
+        System.out.println("22. Delete account");
         System.out.println("0. Exit");
         System.out.print("Alege optiunea: ");
     }
@@ -312,6 +322,70 @@ public class ConsoleApp {
         auditService.logAction("logout");
         authService.logout();
         System.out.println("Logout realizat.");
+    }
+
+    private void updateCategory() {
+        auditService.logAction("updateCategory");
+        printCategories();
+        System.out.print("ID categorie: ");
+        int id = Integer.parseInt(scanner.nextLine());
+        System.out.print("Nume nou: ");
+        String name = scanner.nextLine();
+        System.out.print("Descriere noua: ");
+        String description = scanner.nextLine();
+        boolean updated = categoryService.updateCategory(id, name, description);
+        System.out.println(updated ? "Categorie actualizata." : "Nu exista categoria ceruta.");
+    }
+
+    private void deleteCategory() {
+        auditService.logAction("deleteCategory");
+        printCategories();
+        System.out.print("ID categorie: ");
+        int id = Integer.parseInt(scanner.nextLine());
+        boolean deleted = categoryService.deleteCategory(id);
+        System.out.println(deleted ? "Categorie stearsa." : "Nu exista categoria ceruta.");
+    }
+
+    private void updateAccount() {
+        if (!checkAuthentication()) {
+            return;
+        }
+
+        auditService.logAction("updateAccount");
+        System.out.print("Username nou: ");
+        String username = scanner.nextLine();
+        System.out.print("Master password nou: ");
+        String password = scanner.nextLine();
+        boolean updated = authService.updateAccount(username, password);
+        System.out.println(updated ? "Cont actualizat." : "Nu s-a putut actualiza contul.");
+    }
+
+    private void renameVault() {
+        if (!checkAuthentication()) {
+            return;
+        }
+
+        auditService.logAction("renameVault");
+        System.out.print("Nume nou seif: ");
+        String name = scanner.nextLine();
+        boolean updated = authService.renameVault(name);
+        System.out.println(updated ? "Seif redenumit." : "Nu s-a putut redenumi seiful.");
+    }
+
+    private void deleteAccount() {
+        if (!checkAuthentication()) {
+            return;
+        }
+
+        auditService.logAction("deleteAccount");
+        System.out.print("Scrie DA pentru a confirma stergerea contului: ");
+        String confirmation = scanner.nextLine();
+        if (!confirmation.equals("DA")) {
+            System.out.println("Stergere anulata.");
+            return;
+        }
+        boolean deleted = authService.deleteAccount();
+        System.out.println(deleted ? "Cont sters." : "Nu s-a putut sterge contul.");
     }
 
     private boolean checkAuthentication() {

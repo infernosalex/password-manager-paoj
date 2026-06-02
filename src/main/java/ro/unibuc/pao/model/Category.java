@@ -40,7 +40,7 @@ public class Category implements Comparable<Category> {
 
     @Override
     public int compareTo(Category other) {
-        return this.name.compareToIgnoreCase(other.name);
+        return Integer.compare(this.id, other.id);
     }
 
     @Override
